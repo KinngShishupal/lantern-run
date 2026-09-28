@@ -5,9 +5,12 @@ import { COLORS, CONTROLS_HEIGHT, TOUCH_ZONES } from '../../constants';
 /**
  * Multi-touch pad strip. The whole strip is the touch surface: the left
  * zones steer and the right side jumps, so fingers don't need to hit the
- * drawn pads exactly.
+ * drawn pads exactly. `highlight` ('move' | 'jump') outlines pads for the tutorial.
  */
-export function TouchControls({ screenWidth, onInputChange }) {
+export function TouchControls({ screenWidth, onInputChange, highlight = null }) {
+  const moveStyle = highlight === 'move' && styles.highlighted;
+  const jumpStyle = highlight === 'jump' && styles.highlighted;
+
   const handleTouches = (e) => {
     const controls = { left: false, right: false, jump: false };
     for (const touch of e.nativeEvent.touches || []) {
@@ -28,13 +31,13 @@ export function TouchControls({ screenWidth, onInputChange }) {
       onTouchCancel={handleTouches}
     >
       <View pointerEvents="none" style={styles.padRow}>
-        <View style={[styles.pad, { left: screenWidth * 0.04 }]}>
+        <View style={[styles.pad, moveStyle, { left: screenWidth * 0.04 }]}>
           <Text style={styles.padText}>◀</Text>
         </View>
-        <View style={[styles.pad, { left: screenWidth * 0.25 }]}>
+        <View style={[styles.pad, moveStyle, { left: screenWidth * 0.25 }]}>
           <Text style={styles.padText}>▶</Text>
         </View>
-        <View style={[styles.pad, styles.jumpPad, { right: screenWidth * 0.06 }]}>
+        <View style={[styles.pad, styles.jumpPad, jumpStyle, { right: screenWidth * 0.06 }]}>
           <Text style={[styles.padText, styles.jumpText]}>Jump</Text>
         </View>
       </View>
@@ -58,4 +61,5 @@ const styles = StyleSheet.create({
   jumpPad: { width: 110, height: 84, backgroundColor: COLORS.glow },
   padText: { color: COLORS.paper, fontSize: 24, fontWeight: '900' },
   jumpText: { color: COLORS.ink },
+  highlighted: { borderWidth: 4, borderColor: COLORS.paper },
 });

@@ -10,7 +10,8 @@ import { stepGame } from './engine/stepGame';
 
 /**
  * @param {{ onEvent?: (event: string) => void }} options
- *   onEvent receives every GAME_EVENTS value, e.g. to play sounds.
+ *   onEvent receives every GAME_EVENTS value, e.g. to play sounds. More
+ *   listeners can be attached later with addEventListener.
  */
 export function createGameStore({ onEvent = () => {} } = {}) {
   let game = createGame(0, 0, START_LIVES);
@@ -18,6 +19,9 @@ export function createGameStore({ onEvent = () => {} } = {}) {
   let viewWidth = 0;
   const input = createInput();
   const listeners = new Set();
+  const eventListeners = new Set([onEvent]);
+
+  const emit = (event) => eventListeners.forEach((listener) => listener(event));
 
   const notify = () => {
     version += 1;
@@ -27,7 +31,7 @@ export function createGameStore({ onEvent = () => {} } = {}) {
   const loadStage = (stageIndex, score, lives) => {
     game = createGame(stageIndex, score, lives);
     updateCamera(game, viewWidth);
-    onEvent(GAME_EVENTS.stageStarted);
+    emit(GAME_EVENTS.stageStarted);
     notify();
   };
 
@@ -35,6 +39,11 @@ export function createGameStore({ onEvent = () => {} } = {}) {
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    /** Listens for GAME_EVENTS values; returns an unsubscribe function. */
+    addEventListener(listener) {
+      eventListeners.add(listener);
+      return () => eventListeners.delete(listener);
     },
     getVersion: () => version,
     getGame: () => game,
@@ -50,7 +59,7 @@ export function createGameStore({ onEvent = () => {} } = {}) {
     },
 
     tick(dt) {
-      stepGame(game, input, dt, onEvent);
+      stepGame(game, input, dt, emit);
       updateCamera(game, viewWidth);
       notify();
     },

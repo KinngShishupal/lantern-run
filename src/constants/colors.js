@@ -19,4 +19,14 @@ export const COLORS = {
   ink: '#1A1530',
   paper: '#F6EFD9',
   overlay: 'rgba(26, 21, 48, 0.82)',
+
+  // Hero
+  heroSkin: '#FFD8B5',
+  heroBlush: '#F4978E',
+  heroCloak: '#4A86C8',
+  heroCloakDark: '#2F5C94',
+  heroScarf: '#E86A92',
+  heroBoot: '#3B2A40',
+  lanternMetal: '#5A4A6E',
+  lanternFlame: '#FFF3C4',
 };
