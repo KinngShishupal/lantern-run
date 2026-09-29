@@ -5,7 +5,7 @@ import {
   SCORE,
 } from '../../constants';
 import { isLastStage } from '../levels/stages';
-import { resetBossPosition, updateBoss, updateShots } from './boss';
+import { resetBossFight, updateBoss, updateShockwaves, updateShots } from './boss';
 import { overlaps } from './collision';
 import {
   touchesSpikes,
@@ -32,7 +32,7 @@ function hurtPlayer(g, emit) {
   emit(GAME_EVENTS.hurt);
   g.player = createPlayer(g.spawn);
   g.player.invuln = RESPAWN_INVULNERABILITY;
-  resetBossPosition(g.level.boss, g.level.width);
+  resetBossFight(g);
 }
 
 function clearStage(g, emit) {
@@ -48,6 +48,7 @@ function clearStage(g, emit) {
 export function stepGame(g, input, dt, emit) {
   if (g.status !== GAME_STATUS.playing) return;
   if (g.banner > 0) g.banner -= dt;
+  if (g.shake > 0) g.shake -= dt;
   if (g.bossDown > 0) {
     g.bossDown -= dt;
     if (g.bossDown <= 0) {
@@ -84,7 +85,8 @@ export function stepGame(g, input, dt, emit) {
     updateVents(g, dt) ||
     updateWheels(g, dt) ||
     updateBoss(g, dt, emit) ||
-    updateShots(g, dt);
+    updateShots(g, dt) ||
+    updateShockwaves(g, dt);
   if (hit) {
     hurtPlayer(g, emit);
     return;

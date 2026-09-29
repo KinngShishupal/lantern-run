@@ -80,6 +80,10 @@ export function updateVents(g, dt) {
   const p = g.player;
   let hurt = false;
   for (const v of g.level.vents) {
+    if (v.dormant) {
+      v.phase = 'idle';
+      continue;
+    }
     v.t = (v.t + dt) % VENT_CYCLE.period;
     const fireStart = VENT_CYCLE.period - VENT_CYCLE.fire;
     v.phase = v.t >= fireStart ? 'fire' : v.t >= fireStart - VENT_CYCLE.warn ? 'warn' : 'idle';

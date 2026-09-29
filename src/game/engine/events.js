@@ -8,6 +8,8 @@ export const GAME_EVENTS = {
   checkpoint: 'checkpoint',
   stomp: 'stomp',
   bounce: 'bounce',
+  bossSlam: 'bossSlam',
+  bossEnraged: 'bossEnraged',
   hurt: 'hurt',
   stageCleared: 'stageCleared',
   gameOver: 'gameOver',

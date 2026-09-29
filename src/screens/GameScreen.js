@@ -5,7 +5,7 @@ import { COLORS, CONTROLS_HEIGHT, GAME_STATUS, MIN_GAME_HEIGHT, WORLD_HEIGHT } f
 import { TouchControls } from '../components/controls/TouchControls';
 import { BossHealthBar } from '../components/hud/BossHealthBar';
 import { Hud } from '../components/hud/Hud';
-import { BossDefeatedBanner, StageTitleBanner } from '../components/hud/StageBanner';
+import { BossDefeatedBanner, BossEnragedBanner, StageTitleBanner } from '../components/hud/StageBanner';
 import { StageOverlay } from '../components/overlays/StageOverlay';
 import { TutorialPrompt } from '../components/overlays/TutorialPrompt';
 import { Background } from '../components/scene/Background';
@@ -16,6 +16,16 @@ import { useGameStore } from '../hooks/useGameStore';
 import { useKeyboardControls } from '../hooks/useKeyboardControls';
 import { useSounds } from '../hooks/useSounds';
 import { useTutorial } from '../hooks/useTutorial';
+
+/** World units the screen jolts by, at the start of a shake. */
+const SHAKE_AMPLITUDE = 7;
+
+/** Random jolt that fades out as the shake runs down. */
+function screenShake(secondsLeft, S) {
+  if (!(secondsLeft > 0)) return [];
+  const amp = S(SHAKE_AMPLITUDE * Math.min(1, secondsLeft * 3));
+  return [{ translateX: (Math.random() - 0.5) * 2 * amp }, { translateY: (Math.random() - 0.5) * 2 * amp }];
+}
 
 export function GameScreen({ startStage = 0, onExit }) {
   const { width, height } = useWindowDimensions();
@@ -45,8 +55,10 @@ export function GameScreen({ startStage = 0, onExit }) {
       <StatusBar hidden />
 
       <View style={[styles.game, { height: gameHeight, backgroundColor: level.theme.sky }]}>
-        <Background S={S} level={level} camX={game.camX} screenWidth={width} />
-        <WorldLayer S={S} level={level} player={player} camX={game.camX} viewWidth={viewWidth} />
+        <View style={[StyleSheet.absoluteFill, { transform: screenShake(game.shake, S) }]}>
+          <Background S={S} level={level} camX={game.camX} screenWidth={width} />
+          <WorldLayer S={S} level={level} player={player} camX={game.camX} viewWidth={viewWidth} />
+        </View>
 
         <Hud
           stageLabel={stage.label}
@@ -62,6 +74,7 @@ export function GameScreen({ startStage = 0, onExit }) {
         {playing && game.banner > 0 && (
           <StageTitleBanner stage={stage} timeLeft={game.banner} isBoss={!!boss} />
         )}
+        {playing && boss?.enrageBanner > 0 && <BossEnragedBanner boss={boss} />}
         {playing && game.bossDown > 0 && <BossDefeatedBanner stage={stage} />}
         {tutorialStep && (
           <TutorialPrompt

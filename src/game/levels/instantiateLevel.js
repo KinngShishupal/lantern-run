@@ -63,7 +63,7 @@ export function instantiateLevel(def, theme) {
       facing: -1, timer: 1 + i * 0.6, mouth: 0, dead: false,
     })),
     vents: (def.vents ?? []).map((v) => ({
-      x: v.x, y: GROUND_Y - 6, w: VENT_WIDTH, h: 6, t: v.offset, phase: 'idle',
+      x: v.x, y: GROUND_Y - 6, w: VENT_WIDTH, h: 6, t: v.offset, phase: 'idle', dormant: !!v.dormant,
     })),
     wheels: (def.wheels ?? []).map((w) => ({
       ...w,
@@ -75,6 +75,7 @@ export function instantiateLevel(def, theme) {
     goal: goalX != null ? { x: goalX, y: GROUND_Y - GOAL_SIZE.h, ...GOAL_SIZE } : null,
     boss: def.boss,
     shots: [],
+    shockwaves: [],
     hillsFar: makeHills(def.width, 150, 520, 200, 70, 2),
     hillsNear: makeHills(def.width, 350, 560, 150, 40, 3),
   };

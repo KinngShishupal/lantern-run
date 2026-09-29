@@ -34,6 +34,7 @@ export function createGame(stageIndex, score, lives) {
     banner: STAGE_BANNER_TIME,
     bossDown: 0, // countdown after a boss is beaten
     camX: 0,
+    shake: 0, // seconds of screen shake left
   };
 }
 

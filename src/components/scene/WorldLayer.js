@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
 import { isOnScreen } from '../../game/engine/camera';
-import { Boss } from './entities/Boss';
+import { Boss, Shockwave } from './entities/Boss';
 import { Bat, Beetle, Ember, Hopper, Moth, Shot, Spitter } from './entities/Enemies';
 import { ThornWheel, Vent } from './entities/Obstacles';
 import { Checkpoint, GoalFlag, Seed } from './entities/Pickups';
@@ -39,6 +39,7 @@ export function WorldLayer({ S, level, player, camX, viewWidth }) {
       })}
       {level.wheels.map((w, i) => visible(wheelBounds(w)) && <ThornWheel key={`wheel${i}`} S={S} wheel={w} />)}
       {boss && !boss.dead && <Boss S={S} boss={boss} />}
+      {level.shockwaves.map((w, i) => <Shockwave key={`wave${i}`} S={S} wave={w} />)}
       {level.shots.map((s, i) => <Shot key={`shot${i}`} S={S} shot={s} />)}
       <Player S={S} player={player} />
     </View>
