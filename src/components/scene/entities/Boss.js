@@ -68,6 +68,74 @@ function GroundBody({ S, boss }) {
   );
 }
 
+/** Glowing seams across a molten body. */
+function MoltenCracks({ S, boss }) {
+  const glow = 0.55 + 0.45 * Math.sin(boss.t * 5);
+  const crack = (left, top, width, deg) => ({
+    position: 'absolute',
+    left: S(left),
+    top: S(top),
+    width: S(width),
+    height: S(3),
+    borderRadius: S(2),
+    backgroundColor: boss.inferno ? COLORS.flameCore : COLORS.glow,
+    opacity: glow,
+    transform: [{ rotate: `${deg}deg` }],
+  });
+  return (
+    <>
+      <View style={crack(boss.w * 0.12, boss.h * 0.55, 26, 25)} />
+      <View style={crack(boss.w * 0.3, boss.h * 0.75, 20, -15)} />
+      <View style={crack(boss.w * 0.58, boss.h * 0.6, 28, -30)} />
+      <View style={crack(boss.w * 0.7, boss.h * 0.82, 16, 10)} />
+    </>
+  );
+}
+
+/** A crown of living flame: taller and wilder as the fight goes on. */
+function FlameCrown({ S, boss }) {
+  const scale = boss.inferno ? 1.6 : boss.enraged ? 1.25 : 1;
+  return (
+    <View style={{ position: 'absolute', left: S(boss.w / 2 - 30), top: S(-8), width: S(60), height: S(1) }}>
+      {[0, 1, 2, 3, 4].map((i) => {
+        const base = i === 2 ? 30 : i === 1 || i === 3 ? 22 : 14;
+        const h = base * scale * (0.8 + 0.2 * Math.sin(boss.t * 11 + i * 1.7));
+        const w = i === 2 ? 14 : 11;
+        return (
+          <View
+            key={i}
+            style={{
+              position: 'absolute',
+              left: S(i * 12 + (14 - w) / 2 - 1),
+              top: S(-h),
+              width: S(w),
+              height: S(h),
+              borderTopLeftRadius: S(w),
+              borderTopRightRadius: S(w),
+              borderBottomLeftRadius: S(3),
+              borderBottomRightRadius: S(3),
+              backgroundColor: i % 2 ? COLORS.ember : COLORS.glow,
+            }}
+          >
+            <View
+              style={{
+                position: 'absolute',
+                left: S(w / 2 - 2.5),
+                bottom: 0,
+                width: S(5),
+                height: S(h * 0.5),
+                borderTopLeftRadius: S(3),
+                borderTopRightRadius: S(3),
+                backgroundColor: COLORS.flameCore,
+              }}
+            />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 /** The crown marks the weak spot: stomp from above. */
 function Crown({ S, boss }) {
   return (
@@ -186,7 +254,8 @@ export function Boss({ S, boss }) {
       {boss.enraged && <RageAura S={S} boss={boss} />}
       {boss.mode === 'charge' && <DustTrail S={S} boss={boss} />}
       {boss.type === 'fly' ? <FlyingBody S={S} boss={boss} /> : <GroundBody S={S} boss={boss} />}
-      <Crown S={S} boss={boss} />
+      {boss.look === 'ember' && <MoltenCracks S={S} boss={boss} />}
+      {boss.look === 'ember' ? <FlameCrown S={S} boss={boss} /> : <Crown S={S} boss={boss} />}
       <Eyes S={S} boss={boss} />
       {boss.mode === 'stunned' && <DizzyStars S={S} boss={boss} />}
     </View>

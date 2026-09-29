@@ -76,6 +76,10 @@ export function instantiateLevel(def, theme) {
     boss: def.boss,
     shots: [],
     shockwaves: [],
+    firePatches: [],
+    particles: [],
+    ambient: def.ambient ?? null,
+    lava: !!def.lava,
     hillsFar: makeHills(def.width, 150, 520, 200, 70, 2),
     hillsNear: makeHills(def.width, 350, 560, 150, 40, 3),
   };

@@ -2,6 +2,7 @@ import { View } from 'react-native';
 
 import { isOnScreen } from '../../game/engine/camera';
 import { Boss, Shockwave } from './entities/Boss';
+import { FirePatch, LavaGlow, Particles } from './entities/Effects';
 import { Bat, Beetle, Ember, Hopper, Moth, Shot, Spitter } from './entities/Enemies';
 import { ThornWheel, Vent } from './entities/Obstacles';
 import { Checkpoint, GoalFlag, Seed } from './entities/Pickups';
@@ -23,6 +24,7 @@ export function WorldLayer({ S, level, player, camX, viewWidth }) {
       {level.solids.map((s, i) => visible(s) && (
         <Solid key={`solid${i}`} S={S} solid={s} mossColor={level.theme.moss} />
       ))}
+      {level.lava && <LavaGlow S={S} width={level.width} t={boss?.t ?? 0} />}
       {level.spikes.map((s, i) => visible(s) && <Spikes key={`spikes${i}`} S={S} spikes={s} />)}
       {level.checkpoints.map((c, i) => visible(c) && <Checkpoint key={`cp${i}`} S={S} checkpoint={c} />)}
       {goal && visible(goal) && <GoalFlag S={S} goal={goal} />}
@@ -39,9 +41,11 @@ export function WorldLayer({ S, level, player, camX, viewWidth }) {
       })}
       {level.wheels.map((w, i) => visible(wheelBounds(w)) && <ThornWheel key={`wheel${i}`} S={S} wheel={w} />)}
       {boss && !boss.dead && <Boss S={S} boss={boss} />}
+      {level.firePatches.map((f, i) => <FirePatch key={`fire${i}`} S={S} patch={f} />)}
       {level.shockwaves.map((w, i) => <Shockwave key={`wave${i}`} S={S} wave={w} />)}
       {level.shots.map((s, i) => <Shot key={`shot${i}`} S={S} shot={s} />)}
       <Player S={S} player={player} />
+      <Particles S={S} particles={level.particles} />
     </View>
   );
 }

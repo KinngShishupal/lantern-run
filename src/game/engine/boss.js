@@ -1,11 +1,13 @@
 // Boss behavior. Each boss has a movement style (ground or fly) plus optional
 // attacks from its config: charges, ground-slam shockwaves, projectiles and
-// minions. At half health it enrages and its `phase2` config is merged in.
+// minions. At half health it enrages and its `phase2` config is merged in;
+// an optional `phase3` (the final boss's inferno) kicks in at `phase3.at` hp.
 
 import {
   BEETLE_SIZE,
   BOSS_DEFEAT_DELAY,
   BOSS_STOMP_BOUNCE,
+  COLORS,
   GRAVITY,
   GROUND_Y,
   JUMP_VELOCITY,
@@ -15,6 +17,7 @@ import {
 } from '../../constants';
 import { BOSS_SPAWN_MARGIN } from '../levels/bossArena';
 import { inset, isStomp, overlaps } from './collision';
+import { flash, spawnParticles } from './effects';
 import { GAME_EVENTS } from './events';
 
 const STOMP_TOLERANCE = 24;
@@ -52,6 +55,10 @@ const BURST_SPEED = 190;
 const DEFAULT_SHOT_SPEED = 220;
 const MINION_SPEED = { beetle: 95, moth: 85 };
 
+const FIRE_PATCH = { w: 36, h: 18, life: 2.5, spacing: 44 };
+const FIRE_COLORS = [COLORS.ember, COLORS.glow, COLORS.flameCore];
+const SPARK_COLORS = [COLORS.glow, COLORS.paper, COLORS.flameCore];
+
 const shake = (g, seconds) => {
   g.shake = Math.max(g.shake, seconds);
 };
@@ -63,6 +70,7 @@ const shake = (g, seconds) => {
 export function resetBossFight(g) {
   const b = g.level.boss;
   g.level.shockwaves = [];
+  g.level.firePatches = [];
   if (!b || b.dead) return;
   // In an arena, every beetle and flyer is a minion
   for (const m of g.level.beetles) m.dead = true;
@@ -90,12 +98,17 @@ function spawnShockwaves(g, b) {
     });
   }
   shake(g, SHAKE.slam);
+  spawnParticles(g, {
+    x: cx, y: GROUND_Y - 4, count: 14, speed: 220, angle: -Math.PI / 2, spread: Math.PI,
+    gravity: 600, life: 0.6, size: 6, colors: b.look === 'ember' ? FIRE_COLORS : [COLORS.paper, COLORS.soil],
+  });
+  if (b.fireTrail) dropFirePatch(g, cx - FIRE_PATCH.w / 2);
 }
 
 function fireShots(g, b, type, bossCenter) {
   const p = g.player;
   const playerCenter = p.x + p.w / 2;
-  const fire = (x, y, vx, vy) => g.level.shots.push({ x, y, w: SHOT_SIZE, h: SHOT_SIZE, vx, vy });
+  const fire = (x, y, vx, vy, kind) => g.level.shots.push({ x, y, w: SHOT_SIZE, h: SHOT_SIZE, vx, vy, kind });
   const sx = bossCenter - SHOT_SIZE / 2;
   const sy = b.y + b.h * 0.3;
   const speed = b.shotSpeed ?? DEFAULT_SHOT_SPEED;
@@ -118,9 +131,17 @@ function fireShots(g, b, type, bossCenter) {
     }
     default: // 'rain': falls from the sky around the player
       for (const offset of RAIN_OFFSETS) {
-        fire(playerCenter + offset + (Math.random() - 0.5) * RAIN_SPREAD, -20, 0, RAIN_SPEED);
+        const x = playerCenter + offset + (Math.random() - 0.5) * RAIN_SPREAD;
+        fire(x, -20, 0, RAIN_SPEED, b.look === 'ember' ? 'meteor' : undefined);
       }
   }
+}
+
+/** Leaves a short-lived patch of flames on the ground. */
+function dropFirePatch(g, x) {
+  g.level.firePatches.push({
+    x, y: GROUND_Y - FIRE_PATCH.h, w: FIRE_PATCH.w, h: FIRE_PATCH.h, life: FIRE_PATCH.life, t: 0,
+  });
 }
 
 /** Fires on a timer; `shot` may be a list, used in turn. */
@@ -204,6 +225,11 @@ function moveWalker(g, b, toward, rage, dt, emit) {
       break;
     case 'charge':
       b.vx = b.facing * b.charge.speed;
+      // In the inferno, a charge scorches the ground behind it
+      if (b.fireTrail && Math.abs(b.x - b.trailX) >= FIRE_PATCH.spacing) {
+        b.trailX = b.x;
+        dropFirePatch(g, b.facing > 0 ? b.x : b.x + b.w - FIRE_PATCH.w);
+      }
       break;
     case 'stunned':
       b.vx = 0;
@@ -264,11 +290,39 @@ function enrage(g, b, emit) {
   b.enraged = true;
   Object.assign(b, b.phase2);
   b.enrageBanner = ENRAGE_BANNER_TIME;
+  b.bannerText = 'is enraged!';
   b.chargeTimer = 1.5;
   b.minionTimer = 1.5;
   for (const v of g.level.vents) v.dormant = false; // the arena wakes up too
   shake(g, SHAKE.enrage);
+  flash(g, COLORS.hp, 0.5);
   emit(GAME_EVENTS.bossEnraged);
+}
+
+/** Final phase: faster attacks, and the sky burns (see GameScreen). */
+function unleashInferno(g, b, emit) {
+  b.inferno = true;
+  Object.assign(b, b.phase3);
+  b.enrageBanner = ENRAGE_BANNER_TIME;
+  b.bannerText = b.phase3.banner;
+  b.chargeTimer = 1;
+  shake(g, SHAKE.enrage);
+  flash(g, COLORS.ember, 0.7, 0.75);
+  spawnParticles(g, {
+    x: b.x + b.w / 2, y: b.y + b.h / 2, count: 30, speed: 320, life: 1, size: 7, gravity: 200,
+    colors: FIRE_COLORS,
+  });
+  emit(GAME_EVENTS.bossEnraged);
+}
+
+/** The killing blow: a big burst of the boss's colors and a white flash. */
+function explode(g, b) {
+  const x = b.x + b.w / 2;
+  const y = b.y + b.h / 2;
+  const colors = [b.color, b.dark, ...SPARK_COLORS];
+  spawnParticles(g, { x, y, count: 50, speed: 420, life: 1.4, size: 8, gravity: 500, colors });
+  spawnParticles(g, { x, y, count: 20, speed: 140, life: 1.8, size: 10, gravity: -60, colors: FIRE_COLORS });
+  flash(g, COLORS.paper, 0.6, 0.85);
 }
 
 /** Stomping the top hurts the boss; touching its side hurts the player. */
@@ -284,18 +338,37 @@ function resolveContact(g, b, emit) {
   b.hurt = HURT_COOLDOWN;
   g.score += SCORE.bossHit;
   emit(GAME_EVENTS.stomp);
+  spawnParticles(g, {
+    x: b.x + b.w / 2, y: b.y, count: 16, speed: 260, angle: -Math.PI / 2, spread: Math.PI * 1.2,
+    gravity: 700, life: 0.6, size: 5, colors: SPARK_COLORS,
+  });
+  flash(g, COLORS.paper, 0.15, 0.3);
   if (b.hp <= 0) {
     b.dead = true;
     g.level.shots = [];
     g.level.shockwaves = [];
+    g.level.firePatches = [];
+    explode(g, b);
     for (const m of [...g.level.beetles, ...g.level.flyers]) m.dead = true;
     g.score += SCORE.bossDefeat;
     g.bossDown = BOSS_DEFEAT_DELAY;
     shake(g, SHAKE.enrage);
+  } else if (b.phase3 && !b.inferno && b.hp <= b.phase3.at) {
+    unleashInferno(g, b, emit);
   } else if (b.phase2 && !b.enraged && b.hp <= Math.ceil(b.hpMax / 2)) {
     enrage(g, b, emit);
   }
   return false;
+}
+
+/** A fiery boss sheds embers, more of them the angrier it gets. */
+function emitEmbers(g, b, dt) {
+  const rate = b.inferno ? 30 : b.enraged ? 18 : 9; // per second
+  if (Math.random() > rate * dt) return;
+  spawnParticles(g, {
+    x: b.x + Math.random() * b.w, y: b.y + Math.random() * b.h * 0.5, count: 1, speed: 50,
+    angle: -Math.PI / 2, spread: 1, life: 1.1, size: 5, gravity: -40, colors: FIRE_COLORS,
+  });
 }
 
 /** @returns true when the player got hurt. */
@@ -316,6 +389,7 @@ export function updateBoss(g, dt, emit) {
   else moveWalker(g, b, toward, rage, dt, emit);
   b.x = Math.max(0, Math.min(g.level.width - b.w, b.x));
 
+  if (b.look === 'ember') emitEmbers(g, b, dt);
   shoot(g, b, bossCenter, rage, dt);
   spawnMinions(g, b, rage, dt);
   return resolveContact(g, b, emit);
@@ -333,6 +407,12 @@ export function updateShots(g, dt) {
     const expired = s.ttl != null && s.ttl <= 0;
     const offscreen = expired || s.y > GROUND_Y - 8 || s.y < -60 || s.x < -40 || s.x > width + 40;
     if (offscreen) {
+      if (s.kind === 'meteor' && s.y > GROUND_Y - 8) {
+        spawnParticles(g, {
+          x: s.x + s.w / 2, y: GROUND_Y - 4, count: 8, speed: 180, angle: -Math.PI / 2, spread: 2.2,
+          gravity: 600, life: 0.5, size: 5, colors: FIRE_COLORS,
+        });
+      }
       shots.splice(i, 1);
       continue;
     }
@@ -354,6 +434,23 @@ export function updateShockwaves(g, dt) {
       continue;
     }
     if (p.invuln <= 0 && overlaps(p, inset(s, 4, 8, 0))) return true;
+  }
+  return false;
+}
+
+/** Burning ground left by the inferno. */
+export function updateFirePatches(g, dt) {
+  const patches = g.level.firePatches;
+  const p = g.player;
+  for (let i = patches.length - 1; i >= 0; i--) {
+    const f = patches[i];
+    f.life -= dt;
+    f.t += dt;
+    if (f.life <= 0) {
+      patches.splice(i, 1);
+      continue;
+    }
+    if (p.invuln <= 0 && overlaps(p, inset(f, 6, 6, 0))) return true;
   }
   return false;
 }

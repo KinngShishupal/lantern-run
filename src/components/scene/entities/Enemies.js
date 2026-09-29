@@ -114,6 +114,32 @@ export function Ember({ S, ember }) {
 }
 
 export function Shot({ S, shot }) {
+  if (shot.kind === 'meteor') {
+    // A burning rock with a fading tail above it
+    return (
+      <>
+        {[3, 2, 1].map((i) => (
+          <View
+            key={i}
+            style={{
+              ...dot(S, shot.x + 8 - (10 - i * 2) / 2, shot.y - i * 12, 10 - i * 2, COLORS.ember),
+              opacity: 0.5 - i * 0.12,
+            }}
+          />
+        ))}
+        <GlowOrb
+          S={S}
+          x={shot.x - 10}
+          y={shot.y - 10}
+          size={36}
+          coreSize={18}
+          glowColor={COLORS.emberGlow}
+          coreColor={COLORS.ember}
+          coreStyle={{ borderWidth: S(3), borderColor: COLORS.glow }}
+        />
+      </>
+    );
+  }
   if (shot.kind === 'thorn') {
     return (
       <View

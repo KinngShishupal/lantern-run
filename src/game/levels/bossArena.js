@@ -1,4 +1,4 @@
-import { GROUND_THICKNESS, GROUND_Y, MUSHROOM_SIZE } from '../../constants';
+import { COLORS, GROUND_THICKNESS, GROUND_Y, MUSHROOM_SIZE } from '../../constants';
 
 const ARENA_WIDTH = 1400;
 /** Distance the boss keeps from the arena's right wall when (re)spawned. */
@@ -26,7 +26,10 @@ function createBoss(cfg, arenaWidth) {
     modeTimer: 0,
     restTimer: 0,
     enraged: false,
+    inferno: false,
     enrageBanner: 0,
+    bannerText: '',
+    trailX: 0,
     dead: false,
   };
 }
@@ -45,9 +48,12 @@ const ARENA_FEATURES = {
       x, y: GROUND_Y - MUSHROOM_SIZE.h, ...MUSHROOM_SIZE, kind: 'mushroom',
     }))],
   }),
-  // Flame vents that wake up when the king enrages
+  // A lava-lit cavern full of drifting embers, with flame vents that wake
+  // up when the king enrages
   hollow: () => ({
     solids: [ledge(220), ledge(1030)],
+    lava: true,
+    ambient: { colors: [COLORS.ember, COLORS.glow] },
     vents: [480, 685, 890].map((x, i) => ({ x, offset: i * 0.8, dormant: true })),
   }),
 };
@@ -66,6 +72,8 @@ export function buildBossArena(world) {
     beetles: [],
     flyers: [],
     vents: features.vents ?? [],
+    lava: features.lava,
+    ambient: features.ambient,
     goalX: null,
     boss: createBoss(world.boss, width),
   };

@@ -13,12 +13,16 @@ const KEY_TO_CONTROL = {
   ' ': 'jump',
 };
 
-/** Arrow keys / WASD / space to play, Enter to continue (web only). */
-export function useKeyboardControls(store) {
+/**
+ * Arrow keys / WASD / space to play, Enter to continue (web only).
+ * Keys are ignored while `pausedRef.current` is truthy, e.g. during a story.
+ */
+export function useKeyboardControls(store, pausedRef) {
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return undefined;
 
     const onKeyDown = (e) => {
+      if (pausedRef?.current) return;
       const control = KEY_TO_CONTROL[e.key];
       if (control) {
         store.setInput({ [control]: true });
@@ -42,5 +46,5 @@ export function useKeyboardControls(store) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [store]);
+  }, [store, pausedRef]);
 }

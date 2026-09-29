@@ -5,7 +5,8 @@ import {
   SCORE,
 } from '../../constants';
 import { isLastStage } from '../levels/stages';
-import { resetBossFight, updateBoss, updateShockwaves, updateShots } from './boss';
+import { resetBossFight, updateBoss, updateFirePatches, updateShockwaves, updateShots } from './boss';
+import { updateEffects } from './effects';
 import { overlaps } from './collision';
 import {
   touchesSpikes,
@@ -49,6 +50,7 @@ export function stepGame(g, input, dt, emit) {
   if (g.status !== GAME_STATUS.playing) return;
   if (g.banner > 0) g.banner -= dt;
   if (g.shake > 0) g.shake -= dt;
+  updateEffects(g, dt);
   if (g.bossDown > 0) {
     g.bossDown -= dt;
     if (g.bossDown <= 0) {
@@ -86,7 +88,8 @@ export function stepGame(g, input, dt, emit) {
     updateWheels(g, dt) ||
     updateBoss(g, dt, emit) ||
     updateShots(g, dt) ||
-    updateShockwaves(g, dt);
+    updateShockwaves(g, dt) ||
+    updateFirePatches(g, dt);
   if (hit) {
     hurtPlayer(g, emit);
     return;

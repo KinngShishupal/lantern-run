@@ -5,11 +5,11 @@ import { COLORS } from '../../constants';
 const FADE_OUT_TIME = 0.5;
 
 /** Stage title that fades out at the start of a stage. */
-export function StageTitleBanner({ stage, timeLeft, isBoss }) {
+export function StageTitleBanner({ stage, timeLeft, isBoss, isFinal }) {
   const opacity = Math.max(0, Math.min(1, timeLeft / FADE_OUT_TIME));
   return (
     <View pointerEvents="none" style={[styles.banner, { opacity }]}>
-      <Text style={styles.small}>{stage.label}</Text>
+      <Text style={[styles.small, isFinal && styles.final]}>{isFinal ? 'FINAL BOSS' : stage.label}</Text>
       <Text style={styles.big}>{stage.name}</Text>
       {isBoss && <Text style={styles.hint}>Jump on its head</Text>}
     </View>
@@ -21,7 +21,7 @@ export function BossEnragedBanner({ boss }) {
   const flash = Math.floor(boss.enrageBanner * 8) % 2 === 0;
   return (
     <View pointerEvents="none" style={styles.banner}>
-      <Text style={[styles.big, styles.rage, { opacity: flash ? 1 : 0.6 }]}>{boss.name} is enraged!</Text>
+      <Text style={[styles.big, styles.rage, { opacity: flash ? 1 : 0.6 }]}>{boss.name} {boss.bannerText}</Text>
     </View>
   );
 }
@@ -39,5 +39,6 @@ const styles = StyleSheet.create({
   small: { color: COLORS.paper, fontSize: 16, fontWeight: '700', opacity: 0.85 },
   big: { color: COLORS.glow, fontSize: 34, fontWeight: '900', marginTop: 2, textAlign: 'center' },
   rage: { color: COLORS.hp },
+  final: { color: COLORS.ember, fontSize: 18, fontWeight: '900', letterSpacing: 4, opacity: 1 },
   hint: { color: COLORS.paper, fontSize: 15, fontWeight: '700', marginTop: 6 },
 });

@@ -7,6 +7,9 @@
 //   shot     'aim' | 'spread' | 'rain' | 'burst', or a list used in turn
 //   minions  { kind: 'beetle' | 'moth', every, max }
 //   phase2   overrides merged in when the boss drops to half health
+//   phase3   { at, banner, ...overrides } a final phase at `at` hp
+//   fireTrail true                     charges leave burning ground behind
+//   look     'ember'                    fiery art, embers and meteors
 
 export const WORLDS = [
   {
@@ -53,12 +56,17 @@ export const WORLDS = [
     arena: 'hollow',
     theme: { sky: '#3B1E1A', hillFar: '#522A22', hillNear: '#6A352A', moss: '#E08A3C' },
     boss: {
-      name: 'Ember King', type: 'ground', color: '#D94A2B', dark: '#7A2616',
+      name: 'Ember King', type: 'ground', color: '#D94A2B', dark: '#7A2616', look: 'ember',
       w: 96, h: 70, hp: 7, speed: 95, jumpEvery: 3.0, jumpPower: 700, slam: true,
       shootEvery: 1.8, shot: 'aim', shotSpeed: 240,
       phase2: {
         speed: 115, shootEvery: 1.5, shot: ['spread', 'rain'],
         charge: { every: 4, windup: 0.7, speed: 400 },
+      },
+      phase3: {
+        at: 2, banner: 'unleashes the inferno!',
+        speed: 130, shootEvery: 1.2, fireTrail: true,
+        charge: { every: 3, windup: 0.55, speed: 460 },
       },
     },
   },

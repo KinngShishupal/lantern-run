@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { StatusBar, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { COLORS, CONTROLS_HEIGHT, GAME_STATUS, MIN_GAME_HEIGHT, WORLD_HEIGHT } from '../constants';
@@ -10,12 +10,27 @@ import { StageOverlay } from '../components/overlays/StageOverlay';
 import { TutorialPrompt } from '../components/overlays/TutorialPrompt';
 import { Background } from '../components/scene/Background';
 import { WorldLayer } from '../components/scene/WorldLayer';
-import { STAGES } from '../game/levels/stages';
+import { StoryOverlay } from '../components/story/StoryOverlay';
+import { GAME_EVENTS } from '../game/engine/events';
+import { STAGES, isLastStage } from '../game/levels/stages';
+import { storyId } from '../game/story';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { useGameStore } from '../hooks/useGameStore';
 import { useKeyboardControls } from '../hooks/useKeyboardControls';
 import { useSounds } from '../hooks/useSounds';
 import { useTutorial } from '../hooks/useTutorial';
+
+/** Full-screen color flash, fading out. */
+function ScreenFlash({ flash }) {
+  const opacity = flash.strength * Math.max(0, flash.time / flash.duration);
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: flash.color, opacity }]} />;
+}
+
+/** The sky burns red while the final boss's inferno rages. */
+function InfernoTint({ t }) {
+  const opacity = 0.14 + 0.08 * Math.sin(t * 3);
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: COLORS.ember, opacity }]} />;
+}
 
 /** World units the screen jolts by, at the start of a shake. */
 const SHAKE_AMPLITUDE = 7;
@@ -27,7 +42,17 @@ function screenShake(secondsLeft, S) {
   return [{ translateX: (Math.random() - 0.5) * 2 * amp }, { translateY: (Math.random() - 0.5) * 2 * amp }];
 }
 
-export function GameScreen({ startStage = 0, onExit }) {
+const isFirstOfWorld = (index) => STAGES.findIndex((s) => s.world === STAGES[index].world) === index;
+
+/**
+ *  {object} props
+ * @param {number} props.startStage
+ * @param {string[]} props.seenStories   story ids already shown (see game/story.js)
+ * @param {(id: string) => void} props.onStorySeen
+ * @param {(stageIndex: number) => void} props.onStageCleared
+ * @param {() => void} props.onExit
+ */
+export function GameScreen({ startStage = 0, seenStories = [], onStorySeen, onStageCleared, onExit }) {
   const { width, height } = useWindowDimensions();
   const gameHeight = Math.max(MIN_GAME_HEIGHT, height - CONTROLS_HEIGHT);
   const scale = gameHeight / WORLD_HEIGHT;
@@ -36,8 +61,13 @@ export function GameScreen({ startStage = 0, onExit }) {
 
   const store = useGameStore(startStage);
   const { muted, toggleMute } = useSounds();
-  useGameLoop(store.tick);
-  useKeyboardControls(store);
+  // A story page pauses the game: no ticks, no keyboard input
+  const storyRef = useRef(null);
+  const tick = useCallback((dt) => {
+    if (!storyRef.current) store.tick(dt);
+  }, [store]);
+  useGameLoop(tick);
+  useKeyboardControls(store, storyRef);
   const tutorial = useTutorial(store);
   useEffect(() => {
     store.setViewWidth(viewWidth);
@@ -48,7 +78,27 @@ export function GameScreen({ startStage = 0, onExit }) {
   const { boss } = level;
   const stage = STAGES[game.stage];
   const playing = status === GAME_STATUS.playing;
-  const tutorialStep = playing ? tutorial.step : null;
+
+  // Unlock the next stage as soon as this one is cleared
+  useEffect(
+    () => store.addEventListener((event) => {
+      if (event === GAME_EVENTS.stageCleared) onStageCleared?.(store.getGame().stage);
+    }),
+    [store, onStageCleared],
+  );
+
+  // The world's story: its intro before the first level, its ending after
+  // the boss. Each shows once; it stays up until the parent marks it seen.
+  const bossBeaten = stage.kind === 'boss' && (status === GAME_STATUS.cleared || status === GAME_STATUS.won);
+  const story = [
+    isFirstOfWorld(game.stage) && { worldIndex: stage.world, kind: 'intro' },
+    bossBeaten && { worldIndex: stage.world, kind: 'outro' },
+  ].find((s) => s && !seenStories.includes(storyId(s.worldIndex, s.kind))) ?? null;
+  useEffect(() => {
+    storyRef.current = story;
+  }, [story]);
+  const finishStory = () => onStorySeen?.(storyId(story.worldIndex, story.kind));
+  const tutorialStep = playing && !story ? tutorial.step : null;
 
   return (
     <View style={styles.root}>
@@ -59,6 +109,8 @@ export function GameScreen({ startStage = 0, onExit }) {
           <Background S={S} level={level} camX={game.camX} screenWidth={width} />
           <WorldLayer S={S} level={level} player={player} camX={game.camX} viewWidth={viewWidth} />
         </View>
+        {boss?.inferno && !boss.dead && <InfernoTint t={boss.t} />}
+        {game.flash && <ScreenFlash flash={game.flash} />}
 
         <Hud
           stageLabel={stage.label}
@@ -72,7 +124,12 @@ export function GameScreen({ startStage = 0, onExit }) {
         {boss && <BossHealthBar boss={boss} />}
 
         {playing && game.banner > 0 && (
-          <StageTitleBanner stage={stage} timeLeft={game.banner} isBoss={!!boss} />
+          <StageTitleBanner
+            stage={stage}
+            timeLeft={game.banner}
+            isBoss={!!boss}
+            isFinal={!!boss && isLastStage(game.stage)}
+          />
         )}
         {playing && boss?.enrageBanner > 0 && <BossEnragedBanner boss={boss} />}
         {playing && game.bossDown > 0 && <BossDefeatedBanner stage={stage} />}
@@ -101,6 +158,8 @@ export function GameScreen({ startStage = 0, onExit }) {
         onInputChange={store.setInput}
         highlight={tutorialStep?.highlight}
       />
+
+      {story && <StoryOverlay key={storyId(story.worldIndex, story.kind)} {...story} onDone={finishStory} />}
     </View>
   );
 }
