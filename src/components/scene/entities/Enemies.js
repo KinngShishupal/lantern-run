@@ -3,6 +3,9 @@ import { View } from 'react-native';
 import { COLORS } from '../../../constants';
 import { GlowOrb } from '../primitives';
 
+const abs = (S, x, y, w, h) => ({ position: 'absolute', left: S(x), top: S(y), width: S(w), height: S(h) });
+const dot = (S, x, y, size, color) => ({ ...abs(S, x, y, size, size), borderRadius: S(size / 2), backgroundColor: color });
+
 export function Beetle({ S, beetle }) {
   return (
     <View
@@ -111,6 +114,19 @@ export function Ember({ S, ember }) {
 }
 
 export function Shot({ S, shot }) {
+  if (shot.kind === 'thorn') {
+    return (
+      <View
+        style={{
+          ...abs(S, shot.x, shot.y + 3, shot.w, shot.h - 6),
+          backgroundColor: COLORS.thorn,
+          borderRadius: S(6),
+          borderWidth: S(2),
+          borderColor: COLORS.plantDark,
+        }}
+      />
+    );
+  }
   return (
     <GlowOrb
       S={S}
@@ -121,5 +137,103 @@ export function Shot({ S, shot }) {
       glowColor={COLORS.emberGlow}
       coreColor={COLORS.ember}
     />
+  );
+}
+
+/** Cricket: squats on the ground, stretches out mid-leap. */
+export function Hopper({ S, hopper }) {
+  const { x, y, w, h, dir, onGround, timer } = hopper;
+  const crouch = onGround && timer < 0.25 ? 3 : 0; // winds up just before a hop
+  const eyeX = dir > 0 ? w - 9 : 3;
+  return (
+    <View style={abs(S, x, y, w, h)}>
+      {/* back legs */}
+      <View
+        style={{
+          ...abs(S, dir > 0 ? 0 : w - 14, onGround ? h - 10 : h - 4, 14, 5),
+          backgroundColor: COLORS.hopperDark,
+          borderRadius: S(3),
+          transform: [{ rotate: onGround ? `${dir * -30}deg` : `${dir * 25}deg` }],
+        }}
+      />
+      <View
+        style={{
+          ...abs(S, 2, 6 + crouch, w - 4, h - 8 - crouch),
+          backgroundColor: COLORS.hopper,
+          borderRadius: S(10),
+        }}
+      />
+      <View style={dot(S, eyeX, 3 + crouch, 7, COLORS.paper)} />
+      <View style={dot(S, eyeX + (dir > 0 ? 3 : 1), 5 + crouch, 3, COLORS.ink)} />
+      {/* antenna */}
+      <View
+        style={{
+          ...abs(S, eyeX + 2, -6 + crouch, 2, 10),
+          backgroundColor: COLORS.hopperDark,
+          transform: [{ rotate: `${dir * 30}deg` }],
+        }}
+      />
+    </View>
+  );
+}
+
+/** Bat hanging from a vine; wings spread and flap while swooping. */
+export function Bat({ S, bat }) {
+  const { x, y, w, h, homeX, homeY, mode, t, dir } = bat;
+  const flying = mode !== 'perch';
+  const flap = flying ? Math.sin(t * 22) : 0;
+  const wingW = flying ? 16 : 9;
+  const wingTilt = flying ? flap * 35 : 60;
+  return (
+    <>
+      {/* the vine it hangs from, anchored at its perch */}
+      <View style={{ ...abs(S, homeX + w / 2 - 1, 0, 2, homeY + 2), backgroundColor: COLORS.vine }} />
+      <View style={abs(S, x, y, w, h)}>
+        <View
+          style={{
+            ...abs(S, w / 2 - wingW, 4, wingW, 9),
+            backgroundColor: COLORS.batWing,
+            borderTopLeftRadius: S(8),
+            borderBottomLeftRadius: S(2),
+            transform: [{ rotate: `${-wingTilt}deg` }],
+          }}
+        />
+        <View
+          style={{
+            ...abs(S, w / 2, 4, wingW, 9),
+            backgroundColor: COLORS.batWing,
+            borderTopRightRadius: S(8),
+            borderBottomRightRadius: S(2),
+            transform: [{ rotate: `${wingTilt}deg` }],
+          }}
+        />
+        <View style={dot(S, w / 2 - 7, 2, 14, COLORS.bat)} />
+        <View style={dot(S, w / 2 - 4 + dir, 6, 3, COLORS.batEye)} />
+        <View style={dot(S, w / 2 + 1 + dir, 6, 3, COLORS.batEye)} />
+      </View>
+    </>
+  );
+}
+
+/** Snapping plant; its mouth opens when it spits a thorn. */
+export function Spitter({ S, spitter }) {
+  const { x, y, w, h, facing, mouth } = spitter;
+  const open = mouth > 0;
+  const headX = facing > 0 ? 4 : 0;
+  return (
+    <View style={abs(S, x, y, w, h)}>
+      <View style={{ ...abs(S, w / 2 - 3, 14, 6, h - 14), backgroundColor: COLORS.plantDark }} />
+      <View style={{ ...abs(S, 0, h - 12, 12, 6), backgroundColor: COLORS.plant, borderRadius: S(6), transform: [{ rotate: '-25deg' }] }} />
+      <View style={{ ...abs(S, w - 12, h - 12, 12, 6), backgroundColor: COLORS.plant, borderRadius: S(6), transform: [{ rotate: '25deg' }] }} />
+      <View style={{ ...abs(S, headX, 0, w - 4, 20), backgroundColor: COLORS.plant, borderRadius: S(10) }} />
+      <View
+        style={{
+          ...abs(S, facing > 0 ? w - 9 : 0, open ? 5 : 8, 9, open ? 10 : 4),
+          backgroundColor: COLORS.plantMouth,
+          borderRadius: S(3),
+        }}
+      />
+      <View style={dot(S, facing > 0 ? headX + 8 : w - 14, 4, 5, COLORS.ink)} />
+    </View>
   );
 }

@@ -9,6 +9,7 @@ const EFFECT_FOR_EVENT = {
   [GAME_EVENTS.seed]: 'seed',
   [GAME_EVENTS.checkpoint]: 'seed',
   [GAME_EVENTS.stomp]: 'stomp',
+  [GAME_EVENTS.bounce]: 'jump',
   [GAME_EVENTS.hurt]: 'hurt',
   [GAME_EVENTS.stageCleared]: 'win',
   [GAME_EVENTS.gameOver]: 'gameover',

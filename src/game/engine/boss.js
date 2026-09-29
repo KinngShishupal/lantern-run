@@ -169,7 +169,9 @@ export function updateShots(g, dt) {
     const s = shots[i];
     s.x += s.vx * dt;
     s.y += s.vy * dt;
-    const offscreen = s.y > GROUND_Y - 8 || s.y < -60 || s.x < -40 || s.x > width + 40;
+    if (s.ttl != null) s.ttl -= dt;
+    const expired = s.ttl != null && s.ttl <= 0;
+    const offscreen = expired || s.y > GROUND_Y - 8 || s.y < -60 || s.x < -40 || s.x > width + 40;
     if (offscreen) {
       shots.splice(i, 1);
       continue;

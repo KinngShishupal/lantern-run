@@ -20,6 +20,26 @@ export const COLORS = {
   paper: '#F6EFD9',
   overlay: 'rgba(26, 21, 48, 0.82)',
 
+  // Obstacles
+  crumble: '#A08E7C',
+  crumbleDark: '#6E5F53',
+  mushroomCap: '#D65DB1',
+  mushroomStem: '#EADFC8',
+  vent: '#2A2238',
+  flameCore: '#FFF3C4',
+
+  // Newer enemies
+  hopper: '#7BC96F',
+  hopperDark: '#3E7A3A',
+  bat: '#5B3F7A',
+  batWing: '#3D2856',
+  batEye: '#FF5D5D',
+  vine: '#3E5C3A',
+  plant: '#4FA35B',
+  plantDark: '#2F6B3A',
+  plantMouth: '#E4572E',
+  thorn: '#B6E07A',
+
   // Hero
   heroSkin: '#FFD8B5',
   heroBlush: '#F4978E',

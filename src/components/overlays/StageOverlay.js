@@ -17,7 +17,8 @@ function Overlay({ title, subtitle, children }) {
 const describeNext = (next) => (next.kind === 'boss' ? `Boss, ${next.name}` : next.label);
 
 /** Between-stage and end screens, chosen by the game status. */
-export function StageOverlay({ status, stageIndex, score, onNext, onRetry, onStartOver }) {
+export function StageOverlay({ status, stageIndex, score, onNext, onRetry, onStartOver, onExit }) {
+  const levelsButton = onExit && <Button label="All levels" variant="ghost" onPress={onExit} />;
   const stage = STAGES[stageIndex];
 
   switch (status) {
@@ -28,6 +29,7 @@ export function StageOverlay({ status, stageIndex, score, onNext, onRetry, onSta
           subtitle={`Score ${score}`}
         >
           <Button label={`Next: ${describeNext(STAGES[stageIndex + 1])}`} onPress={onNext} />
+          {levelsButton}
         </Overlay>
       );
     case GAME_STATUS.over:
@@ -37,6 +39,7 @@ export function StageOverlay({ status, stageIndex, score, onNext, onRetry, onSta
           {stageIndex > 0 && (
             <Button label={`Start from ${STAGES[0].label}`} variant="ghost" onPress={onStartOver} />
           )}
+          {levelsButton}
         </Overlay>
       );
     case GAME_STATUS.won:
@@ -46,6 +49,7 @@ export function StageOverlay({ status, stageIndex, score, onNext, onRetry, onSta
           subtitle={`All ${WORLDS.length} worlds cleared. Final score ${score}`}
         >
           <Button label="Play again" onPress={onStartOver} />
+          {levelsButton}
         </Overlay>
       );
     default:

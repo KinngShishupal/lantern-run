@@ -7,10 +7,18 @@ import {
 import { isLastStage } from '../levels/stages';
 import { resetBossPosition, updateBoss, updateShots } from './boss';
 import { overlaps } from './collision';
-import { touchesSpikes, updateBeetles, updateFlyers } from './enemies';
+import {
+  touchesSpikes,
+  updateBats,
+  updateBeetles,
+  updateFlyers,
+  updateHoppers,
+  updateSpitters,
+} from './enemies';
 import { GAME_EVENTS } from './events';
 import { createPlayer } from './gameState';
-import { collectSeeds, updateCheckpoint } from './pickups';
+import { bounceOnMushrooms, updateTerrain, updateVents, updateWheels } from './obstacles';
+import { collectSeeds, updateCheckpoints } from './pickups';
 import { applyPlayerInput, movePlayer, updateMovers } from './player';
 
 function hurtPlayer(g, emit) {
@@ -52,8 +60,10 @@ export function stepGame(g, input, dt, emit) {
   const { solids, spikes, goal, width } = g.level;
 
   updateMovers(solids, p, dt);
+  updateTerrain(solids, p, dt);
   applyPlayerInput(p, input, dt, emit);
   movePlayer(p, solids, width, dt);
+  bounceOnMushrooms(p, emit);
   if (p.invuln > 0) p.invuln -= dt;
 
   const fellInPit = p.y > PIT_DEPTH;
@@ -62,12 +72,17 @@ export function stepGame(g, input, dt, emit) {
     return;
   }
 
-  updateCheckpoint(g, emit);
+  updateCheckpoints(g, emit);
   collectSeeds(g, emit);
 
   const hit =
     updateBeetles(g, dt, emit) ||
     updateFlyers(g, dt, emit) ||
+    updateHoppers(g, dt, emit) ||
+    updateBats(g, dt, emit) ||
+    updateSpitters(g, dt, emit) ||
+    updateVents(g, dt) ||
+    updateWheels(g, dt) ||
     updateBoss(g, dt, emit) ||
     updateShots(g, dt);
   if (hit) {

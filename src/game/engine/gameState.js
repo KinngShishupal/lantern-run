@@ -14,6 +14,7 @@ export function createPlayer(spawn) {
     coyote: 0,
     jumpBuffer: 0,
     airJumps: AIR_JUMPS,
+    springing: false, // rising from a mushroom bounce
     invuln: 0,
   };
 }

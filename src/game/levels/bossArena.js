@@ -31,7 +31,7 @@ export function buildBossArena(world) {
   return {
     width,
     start: { x: 100, y: 300 },
-    checkpoint: null,
+    checkpoints: [],
     solids: [
       { x: 0, y: GROUND_Y, w: width, h: GROUND_THICKNESS, kind: 'ground' },
       { x: 220, y: 250, w: 150, h: 16, kind: 'ledge' },

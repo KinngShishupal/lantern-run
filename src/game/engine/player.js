@@ -50,8 +50,11 @@ export function applyPlayerInput(p, input, dt, emit) {
     emit(GAME_EVENTS.doubleJump);
   }
 
-  // Heavier gravity when jump is released early = variable jump height
-  const gravity = p.vy < 0 && !input.jump ? GRAVITY * SHORT_HOP_GRAVITY_MULTIPLIER : GRAVITY;
+  // Heavier gravity when jump is released early = variable jump height,
+  // except on a mushroom launch, which always goes full height
+  if (p.vy >= 0) p.springing = false;
+  const shortHop = p.vy < 0 && !input.jump && !p.springing;
+  const gravity = shortHop ? GRAVITY * SHORT_HOP_GRAVITY_MULTIPLIER : GRAVITY;
   p.vy = Math.min(MAX_FALL_SPEED, p.vy + gravity * dt);
 }
 
@@ -59,6 +62,7 @@ export function applyPlayerInput(p, input, dt, emit) {
 export function movePlayer(p, solids, worldWidth, dt) {
   p.x += p.vx * dt;
   for (const s of solids) {
+    if (s.off) continue; // e.g. a crumbled ledge
     if (!overlaps(p, s)) continue;
     if (p.vx > 0) p.x = s.x - p.w;
     else if (p.vx < 0) p.x = s.x + s.w;
@@ -70,6 +74,7 @@ export function movePlayer(p, solids, worldWidth, dt) {
   p.onGround = false;
   p.standingOn = null;
   for (const s of solids) {
+    if (s.off) continue; // e.g. a crumbled ledge
     if (!overlaps(p, s)) continue;
     if (p.vy >= 0) {
       p.y = s.y - p.h;

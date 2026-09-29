@@ -7,6 +7,7 @@ export const GAME_EVENTS = {
   seed: 'seed',
   checkpoint: 'checkpoint',
   stomp: 'stomp',
+  bounce: 'bounce',
   hurt: 'hurt',
   stageCleared: 'stageCleared',
   gameOver: 'gameOver',

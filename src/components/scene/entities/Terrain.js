@@ -2,12 +2,15 @@ import { View } from 'react-native';
 
 import { COLORS } from '../../../constants';
 import { Triangle } from '../primitives';
+import { CrumbleLedge, Mushroom } from './Obstacles';
 
 const SPIKE_TOOTH_WIDTH = 14;
 
 /** Ground, ledges, blocks and moving platforms, with a grassy top strip. */
 export function Solid({ S, solid, mossColor }) {
   const { kind } = solid;
+  if (kind === 'crumble') return <CrumbleLedge S={S} solid={solid} />;
+  if (kind === 'mushroom') return <Mushroom S={S} solid={solid} />;
   return (
     <View
       style={{

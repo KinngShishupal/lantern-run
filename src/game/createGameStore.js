@@ -9,12 +9,12 @@ import { createGame, createInput } from './engine/gameState';
 import { stepGame } from './engine/stepGame';
 
 /**
- * @param {{ onEvent?: (event: string) => void }} options
+ * @param {{ onEvent?: (event: string) => void, startStage?: number }} options
  *   onEvent receives every GAME_EVENTS value, e.g. to play sounds. More
  *   listeners can be attached later with addEventListener.
  */
-export function createGameStore({ onEvent = () => {} } = {}) {
-  let game = createGame(0, 0, START_LIVES);
+export function createGameStore({ onEvent = () => {}, startStage = 0 } = {}) {
+  let game = createGame(startStage, 0, START_LIVES);
   let version = 0;
   let viewWidth = 0;
   const input = createInput();

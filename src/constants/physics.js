@@ -22,3 +22,6 @@ export const BOSS_STOMP_BOUNCE = 0.75;
 
 /** Longest simulated step, so a stall can't tunnel through walls. */
 export const MAX_FRAME_DT = 1 / 30;
+
+/** Launch speed off a bounce mushroom (about 250 up, over walls you can't jump). */
+export const MUSHROOM_BOUNCE_VELOCITY = 950;

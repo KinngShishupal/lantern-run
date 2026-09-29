@@ -9,6 +9,9 @@ export const SCORE = {
   seed: 10,
   moth: 30,
   beetle: 50,
+  hopper: 40,
+  bat: 40,
+  spitter: 60,
   bossHit: 100,
   bossDefeat: 500,
   lifeBonus: 100, // per life left when a stage is cleared

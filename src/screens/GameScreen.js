@@ -17,14 +17,14 @@ import { useKeyboardControls } from '../hooks/useKeyboardControls';
 import { useSounds } from '../hooks/useSounds';
 import { useTutorial } from '../hooks/useTutorial';
 
-export function GameScreen() {
+export function GameScreen({ startStage = 0, onExit }) {
   const { width, height } = useWindowDimensions();
   const gameHeight = Math.max(MIN_GAME_HEIGHT, height - CONTROLS_HEIGHT);
   const scale = gameHeight / WORLD_HEIGHT;
   const viewWidth = width / scale; // visible width in world units
   const S = (n) => n * scale; // world units -> screen pixels
 
-  const store = useGameStore();
+  const store = useGameStore(startStage);
   const { muted, toggleMute } = useSounds();
   useGameLoop(store.tick);
   useKeyboardControls(store);
@@ -55,6 +55,7 @@ export function GameScreen() {
           lives={game.lives}
           muted={muted}
           onToggleMute={toggleMute}
+          onExit={onExit}
         />
         {boss && <BossHealthBar boss={boss} />}
 
@@ -78,6 +79,7 @@ export function GameScreen() {
           onNext={store.nextStage}
           onRetry={store.retryStage}
           onStartOver={store.startOver}
+          onExit={onExit}
         />
       </View>
 

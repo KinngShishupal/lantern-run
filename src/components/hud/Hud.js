@@ -2,10 +2,17 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '../../constants';
 
-export function Hud({ stageLabel, score, seedsLeft, lives, muted, onToggleMute }) {
+export function Hud({ stageLabel, score, seedsLeft, lives, muted, onToggleMute, onExit }) {
   return (
     <View style={styles.hud}>
-      <Text style={styles.text}>{stageLabel}</Text>
+      <View style={styles.left}>
+        {onExit && (
+          <Pressable onPress={onExit} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back to levels">
+            <Text style={styles.text}>‹ Levels</Text>
+          </Pressable>
+        )}
+        <Text style={styles.text}>{stageLabel}</Text>
+      </View>
       <Text style={styles.text}>Score {score}</Text>
       {seedsLeft != null && <Text style={styles.text}>Seeds left {seedsLeft}</Text>}
       <View style={styles.right}>
@@ -30,6 +37,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  left: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   text: { color: COLORS.paper, fontSize: 16, fontWeight: '800' },
 });
