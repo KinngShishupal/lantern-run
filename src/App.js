@@ -2,7 +2,8 @@
 // 4 worlds, each with 3 levels and a boss. Collect glowing seeds, stomp
 // beetles and moths, dodge spikes and embers, and beat each world's boss.
 
-import { useState } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { StoryOverlay } from './components/story/StoryOverlay';
@@ -12,6 +13,10 @@ import { useLandscapeLock } from './hooks/useLandscapeLock';
 import { useProgress } from './hooks/useProgress';
 import { GameScreen } from './screens/GameScreen';
 import { LevelSelectScreen } from './screens/LevelSelectScreen';
+import { SplashIntro } from './screens/SplashIntro';
+
+// Keep the native splash up until saved progress has loaded
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const SELECT = { name: 'select' };
 
@@ -20,8 +25,15 @@ export default function App() {
   const progress = useProgress();
   // { name: 'select' } | { name: 'game', stage } | { name: 'story', world, kinds, step }
   const [screen, setScreen] = useState(SELECT);
+  const [introDone, setIntroDone] = useState(false);
+  const finishIntro = useCallback(() => setIntroDone(true), []);
+
+  useEffect(() => {
+    if (progress.loaded) SplashScreen.hideAsync().catch(() => {});
+  }, [progress.loaded]);
 
   if (!progress.loaded) return <View style={styles.root} />;
+  if (!introDone) return <SplashIntro onDone={finishIntro} />;
 
   if (screen.name === 'game') {
     return (
