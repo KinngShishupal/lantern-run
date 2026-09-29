@@ -10,6 +10,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "android": {
+      "package": "com.kinngshishupal.lanternrun",
       "adaptiveIcon": {
         "backgroundColor": "#1A1530",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -30,7 +31,8 @@
           "imageWidth": 220,
           "resizeMode": "contain"
         }
-      ]
+      ],
+      "expo-asset"
     ]
   }
 }
